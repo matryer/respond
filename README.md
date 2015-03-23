@@ -6,17 +6,23 @@ API responding for Go
 Simple responding:
 
 ```
-respond.With{http.StatusOK, dataMap}.To(w, r)
+respond.With{http.StatusOK, data}.To(w, r)
 ```
 
 ```
 respond.With{http.StatusInternalServerError, err}.To(w, r)
 ```
 
-#### Global headers
+#### Headers
+
+`respond.Headers()` allows you to setup headers for every response:
 
 ```
-respond.Headers.Set("X-App-Version", "1.0")
+respond.Headers().Set("X-App-Version", "1.0")
+```
 
-respond.With()
+Or use the `AddHeader`, `SetHeader` and `DelHeader` functions on `With`:
+
+```
+respond.With{http.StatusOK, data}.DelHeader("X-Custom").AddHeader("X-RateLimit", rateLimitVal)
 ```

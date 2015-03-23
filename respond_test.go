@@ -54,16 +54,22 @@ func TestHeadersWithHeader(t *testing.T) {
 	respond.Headers().Add("X-List", "2")
 	respond.Headers().Add("X-List", "3")
 	respond.Headers().Set("X-Global", "Value 2")
+	respond.Headers().Set("X-Global2", "Value 2")
 	respond.Headers().Set("X-Custom", "should be overwritten")
 	respond.With{
 		Code: http.StatusOK,
 		Data: testdata,
-	}.SetHeader("X-Custom", "overwrite").To(w, r)
+	}.
+		SetHeader("X-Custom", "overwrite").
+		AddHeader("X-List", "4").
+		DelHeader("X-Global2").
+		To(w, r)
 	is.Equal(http.StatusOK, w.Code)
 	var data map[string]interface{}
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
 	is.Equal(data, testdata)
 	is.Equal(w.Header().Get("X-Custom"), "overwrite")
 	is.Equal(w.Header().Get("X-Global"), "Value 2")
-	is.Equal(w.Header()["X-List"], []string{"1", "2", "3"})
+	is.Equal(w.Header()["X-List"], []string{"1", "2", "3", "4"})
+	is.Nil(w.Header()["X-Global2"])
 }

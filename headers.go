@@ -5,12 +5,42 @@ import (
 	"sync"
 )
 
+// SetHeader specifies a response header.
+// Headers set this way will overwrite existing headers.
+// See http.Header.Set.
+func (with With) SetHeader(key, value string) *With {
+	with.initheaders()
+	with.header.Set(key, value)
+	return &with
+}
+
+// AddHeader specifies a response header.
+// Headers set this way will append to existing headers.
+// See http.Header.Add.
+func (with With) AddHeader(key, value string) *With {
+	with.initheaders()
+	with.header.Add(key, value)
+	return &with
+}
+
+// DelHeader deletes the specified response header.
+// See http.Header.Del.
+func (with With) DelHeader(key string) *With {
+	with.initheaders()
+	with.header.Del(key)
+	return &with
+}
+
+// initheaders sets up headers for this With copying global
+// headers as a starting place.
 func (with *With) initheaders() {
 	if with.header == nil {
 		with.header = make(http.Header)
-		headers.lock.RLock()
-		copyheaders(headers.headers, with.header)
-		headers.lock.RUnlock()
+		if len(headers.headers) > 0 {
+			headers.lock.RLock()
+			copyheaders(headers.headers, with.header)
+			headers.lock.RUnlock()
+		}
 	}
 }
 
