@@ -1,6 +1,7 @@
 package respond
 
 import (
+	"bytes"
 	"log"
 	"net/http"
 )
@@ -34,9 +35,26 @@ func (with *W) To(w http.ResponseWriter, r *http.Request) {
 	transformLock.RLock()
 	data = transform(r, data)
 	transformLock.RUnlock()
+
+	afterLock.RLock()
+	res := &Response{
+		w:        w,
+		keepbody: keepbody,
+		status:   with.Code,
+		body:     new(bytes.Buffer),
+	}
+	afterLock.RUnlock()
+
 	// write response
-	if err := Write(w, r, with.Code, data, encoder); err != nil {
+	if err := Write(res, r, with.Code, data, encoder); err != nil {
 		Err(w, r, with, err)
+	}
+
+	// call after (if there is one)
+	if after != nil {
+		afterLock.RLock()
+		after(res, r, with.Code, data)
+		afterLock.RUnlock()
 	}
 }
 

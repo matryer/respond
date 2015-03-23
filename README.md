@@ -17,7 +17,16 @@ respond.With(http.StatusInternalServerError, err).To(w, r)
 
 ## Advanced
 
-  * Check out the [documentation](http://godoc.org/github.com/matryer/respond)
+Check out the [documentation](http://godoc.org/github.com/matryer/respond)
+
+Features:
+
+  * Simple API: `respond.With(http.StatusOK, data).To(w, r)`
+  * Set common `Headers` that will be written with every response
+  * Provide `Public` views of your own types
+  * Support multiple formats through `Encoders`
+  * `Transform` or wrap data before it gets written
+  * `After` callback allows you to run code after every response
 
 #### Public view
 
