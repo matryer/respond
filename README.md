@@ -13,6 +13,22 @@ respond.With(http.StatusOK, data).To(w, r)
 respond.With(http.StatusInternalServerError, err).To(w, r)
 ```
 
+#### Encoders
+
+By default, repsond speaks JSON. But you can add other encoders:
+
+```
+respond.Encoders().Add("xml", YourXMLEncoder())
+```
+
+And you can stop respond from speaking JSON like this:
+
+```
+respond.Encoders().Del(respond.JSON)
+```
+
+By default, `respond.DefaultEncoder` will be used if no others match.
+
 #### Headers
 
 `respond.Headers()` allows you to setup headers for every response:
