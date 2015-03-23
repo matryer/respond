@@ -20,11 +20,12 @@ type W struct {
 
 // To writes the repsonse.
 func (with *W) To(w http.ResponseWriter, r *http.Request) {
-	// copy headers
+	// copy headers to ResponseWriter
 	copyheaders(with.header, w.Header())
 	// find the encoder
-	encoder, ok := Encoders().Match(r.Header.Get("Accept"))
-	if !ok {
+	var encoder Encoder
+	var ok bool
+	if encoder, ok = Encoders().Match(r.Header.Get("Accept")); !ok {
 		encoder = DefaultEncoder
 	}
 	// write response
