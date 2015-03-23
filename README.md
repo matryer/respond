@@ -83,7 +83,7 @@ By default, `respond.DefaultEncoder` will be used if no others match.
 
 #### Transforming
 
-The data can be transformed by setting a `TransformFunc` to use to modify any results before they are written.
+The data can be transformed by setting a `TransformFunc` to modify any results before they are written.
 
 By default, `error` types are wrapped into a map, and the `Error() string` is used as the value:
 
