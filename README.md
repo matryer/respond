@@ -27,5 +27,6 @@ Or use the `AddHeader`, `SetHeader` and `DelHeader` fluent functions on `With`:
 respond.With{http.StatusOK, data}.
 	DelHeader("X-Global").
 	AddHeader("X-RateLimit", rateLimitVal).
-	SetHeader("X-Log", "Some item")
+	SetHeader("X-Log", "Some item").
+	To(w, r)
 ```
