@@ -2,6 +2,7 @@ package respond_test
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -74,14 +75,28 @@ func TestHeadersWithHeader(t *testing.T) {
 	is.Nil(w.Header()["X-Global2"])
 }
 
+type testEncoder struct{}
+
+func (testEncoder) Encode(w http.ResponseWriter, r *http.Request, v interface{}) error {
+	io.WriteString(w, "test encoder")
+	return nil
+}
+func (testEncoder) ContentType(w http.ResponseWriter, r *http.Request) string {
+	return "test/encoder"
+}
+
 func TestEncoding(t *testing.T) {
 	is := is.New(t)
 	w := httptest.NewRecorder()
 	r := request()
+	r.Header.Set("Accept", "application/original")
+	respond.Encoders().Del(respond.JSON)
+	respond.Encoders().Add("original", &testEncoder{})
 	respond.With(
 		http.StatusOK,
 		testdata,
 	).To(w, r)
 	is.Equal(http.StatusOK, w.Code)
-	is.Equal(w.Body.String(), `{"test":true}`+"\n")
+	is.Equal(w.Body.String(), `test encoder`)
+	is.Equal(w.HeaderMap.Get("Content-Type"), "test/encoder")
 }
