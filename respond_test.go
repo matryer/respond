@@ -73,3 +73,15 @@ func TestHeadersWithHeader(t *testing.T) {
 	is.Equal(w.Header()["X-List"], []string{"1", "2", "3", "4"})
 	is.Nil(w.Header()["X-Global2"])
 }
+
+func TestEncoding(t *testing.T) {
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	r := request()
+	respond.With(
+		http.StatusOK,
+		testdata,
+	).To(w, r)
+	is.Equal(http.StatusOK, w.Code)
+	is.Equal(w.Body.String(), `{"test":true}`+"\n")
+}
