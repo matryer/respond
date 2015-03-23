@@ -33,7 +33,8 @@ func (with *W) To(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Write is the function that actually writes the response.
+// Write is the function that sets the Content-Type, writes the header
+// and encodes the body using the specified Encoder.
 var Write = func(w http.ResponseWriter, r *http.Request, status int, data interface{}, encoder Encoder) error {
 	w.Header().Set("Content-Type", encoder.ContentType(w, r))
 	w.WriteHeader(status)
@@ -42,5 +43,5 @@ var Write = func(w http.ResponseWriter, r *http.Request, status int, data interf
 
 // Err is called when an internal error occurs while responding.
 var Err = func(w http.ResponseWriter, r *http.Request, with *W, err error) {
-	log.Println()
+	log.Println("Err:", r.URL.String(), err)
 }
