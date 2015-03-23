@@ -79,10 +79,10 @@ var _ Encoder = (*jsonEncoder)(nil)
 // JSON is an Encoder for JSON.
 var JSON *jsonEncoder
 
-func (j *jsonEncoder) Encode(w http.ResponseWriter, r *http.Request, v interface{}) error {
+func (*jsonEncoder) Encode(w http.ResponseWriter, r *http.Request, v interface{}) error {
 	return json.NewEncoder(w).Encode(v)
 }
 
-func (j *jsonEncoder) ContentType(w http.ResponseWriter, r *http.Request) string {
+func (*jsonEncoder) ContentType(w http.ResponseWriter, r *http.Request) string {
 	return "application/json"
 }
