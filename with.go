@@ -6,20 +6,26 @@ import (
 	"net/http"
 )
 
-// With describes a response.
-type With struct {
+// With specifies the status code and data to repsond with.
+func With(status int, data interface{}) *W {
+	return &W{Code: status, Data: data}
+}
+
+// W holds details about the response that will be made
+// when To is called.
+type W struct {
 	Code   int
 	Data   interface{}
 	header http.Header
 }
 
 // To writes the repsonse.
-func (with With) To(w http.ResponseWriter, r *http.Request) {
+func (with *W) To(w http.ResponseWriter, r *http.Request) {
 	// copy headers
 	copyheaders(with.header, w.Header())
 	// write response
 	if err := Write(w, r, with.Code, with.Data); err != nil {
-		Err(w, r, &with, err)
+		Err(w, r, with, err)
 	}
 }
 
@@ -30,6 +36,6 @@ var Write = func(w http.ResponseWriter, r *http.Request, status int, data interf
 }
 
 // Err is called when an internal error occurs while responding.
-var Err = func(w http.ResponseWriter, r *http.Request, with *With, err error) {
+var Err = func(w http.ResponseWriter, r *http.Request, with *W, err error) {
 	log.Println()
 }

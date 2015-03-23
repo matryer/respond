@@ -6,11 +6,11 @@ API responding for Go
 Simple responding:
 
 ```
-respond.With{http.StatusOK, data}.To(w, r)
+respond.With(http.StatusOK, data).To(w, r)
 ```
 
 ```
-respond.With{http.StatusInternalServerError, err}.To(w, r)
+respond.With(http.StatusInternalServerError, err).To(w, r)
 ```
 
 #### Headers
@@ -24,7 +24,7 @@ respond.Headers().Set("X-App-Version", "1.0")
 Or use the `AddHeader`, `SetHeader` and `DelHeader` fluent functions on `With`:
 
 ```
-respond.With{http.StatusOK, data}.
+respond.With(http.StatusOK, data).
 	DelHeader("X-Global").
 	AddHeader("X-RateLimit", rateLimitVal).
 	SetHeader("X-Log", "Some item").

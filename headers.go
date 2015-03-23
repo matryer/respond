@@ -8,32 +8,32 @@ import (
 // SetHeader specifies a response header.
 // Headers set this way will overwrite existing headers.
 // See http.Header.Set.
-func (with With) SetHeader(key, value string) *With {
+func (with *W) SetHeader(key, value string) *W {
 	with.initheaders()
 	with.header.Set(key, value)
-	return &with
+	return with
 }
 
 // AddHeader specifies a response header.
 // Headers set this way will append to existing headers.
 // See http.Header.Add.
-func (with With) AddHeader(key, value string) *With {
+func (with *W) AddHeader(key, value string) *W {
 	with.initheaders()
 	with.header.Add(key, value)
-	return &with
+	return with
 }
 
 // DelHeader deletes the specified response header.
 // See http.Header.Del.
-func (with With) DelHeader(key string) *With {
+func (with *W) DelHeader(key string) *W {
 	with.initheaders()
 	with.header.Del(key)
-	return &with
+	return with
 }
 
 // initheaders sets up headers for this With copying global
 // headers as a starting place.
-func (with *With) initheaders() {
+func (with *W) initheaders() {
 	if with.header == nil {
 		with.header = make(http.Header)
 		if len(headers.headers) > 0 {
