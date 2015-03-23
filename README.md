@@ -28,6 +28,24 @@ Features:
   * `Transform` or wrap data before it gets written
   * `After` callback allows you to run code after every response (includes `respond.LogAfter` to inspect responses)
 
+#### Headers
+
+`respond.Headers()` allows you to setup headers for every response:
+
+```
+respond.Headers().Set("X-App-Version", "1.0")
+```
+
+Or use the `AddHeader`, `SetHeader` and `DelHeader` fluent functions on `With`:
+
+```
+respond.With(http.StatusOK, data).
+	DelHeader("X-Global").
+	AddHeader("X-RateLimit", rateLimitVal).
+	SetHeader("X-Log", "Some item").
+	To(w, r)
+```
+
 #### Public view
 
 To control how your own types are exposed through repsond, they can implement the `Public` interface by providing a simple `Public() interface{}` method:
@@ -46,23 +64,22 @@ func (a *Auth) Public() interface{} {
   * When you respond with an object of type `Auth`, the map returned by the `Public()` method will be written to the response instead.
   * Returning another object that implements `Public` is OK up to a point. 
 
-#### Headers
+#### Encoders
 
-`respond.Headers()` allows you to setup headers for every response:
-
-```
-respond.Headers().Set("X-App-Version", "1.0")
-```
-
-Or use the `AddHeader`, `SetHeader` and `DelHeader` fluent functions on `With`:
+By default, repsond speaks JSON. But you can add other encoders:
 
 ```
-respond.With(http.StatusOK, data).
-	DelHeader("X-Global").
-	AddHeader("X-RateLimit", rateLimitVal).
-	SetHeader("X-Log", "Some item").
-	To(w, r)
+respond.Encoders().Add("xml", YourXMLEncoder())
 ```
+
+And you can stop respond from speaking JSON like this:
+
+```
+respond.Encoders().Del(respond.JSON)
+```
+
+By default, `respond.DefaultEncoder` will be used if no others match.
+
 
 #### Transforming
 
@@ -88,18 +105,27 @@ respond.Transform(func(r *http.Request, data interface{}) interface{} {
 })
 ```
 
-#### Encoders
+#### After
 
-By default, repsond speaks JSON. But you can add other encoders:
+Calling `respond.After` will register an `AfterFunc` that will get called after each response has finished being written.
+
+Perfect for:
+
+  * Debugging
+  * Logging
+  * Cleaning up request specific resources
+
+A simple logging AfterFunc has been provided which can be enabled:
 
 ```
-respond.Encoders().Add("xml", YourXMLEncoder())
+respond.After(respond.LogAfter)
 ```
 
-And you can stop respond from speaking JSON like this:
+Adding your own AfterFunc is as simple as calling:
 
 ```
-respond.Encoders().Del(respond.JSON)
+respond.KeepBody(true) // keep a copy of the body for use in the AfterFunc.
+respond.After(func(w *respond.Response, r *http.Request, status int, data interface{}) {
+	// use w.Body() to learn more about the response.
+})
 ```
-
-By default, `respond.DefaultEncoder` will be used if no others match.

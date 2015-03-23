@@ -37,7 +37,6 @@ func TestAfter(t *testing.T) {
 	is.Equal(data, testdata)
 
 	is.Equal(afterRes.Body().String(), w.Body.String())
-	is.Equal(afterRes.Status(), w.Code)
 	is.Equal(afterData, testdata)
 	is.Equal(afterStatus, http.StatusOK)
 	is.Equal(afterReq, r)

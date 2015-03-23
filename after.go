@@ -82,12 +82,6 @@ func (r *Response) Body() *bytes.Buffer {
 	return r.body
 }
 
-// Status gets the HTTP Status Code that repsond replied
-// with.
-func (r *Response) Status() int {
-	return r.status
-}
-
 // HasBody gets whether the Response has a copy of the
 // Body or not.
 func (r *Response) HasBody() bool {
