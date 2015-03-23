@@ -2,12 +2,24 @@ package respond
 
 import (
 	"bytes"
+	"log"
 	"net/http"
 	"sync"
 )
 
 // AfterFunc is a function that can be called after each response.
 type AfterFunc func(w *Response, r *http.Request, status int, data interface{})
+
+// LogAfter is an AfterFunc that logs the repsonse detials via log.Println.
+// respond.After(respond.LogAfter) provides a debug level view into
+// what responses are being made.
+func LogAfter(w *Response, r *http.Request, status int, data interface{}) {
+	if w.HasBody() {
+		log.Println("respond:", status, w.Body().String())
+	} else {
+		log.Println("respond:", status, data)
+	}
+}
 
 // After sets the AfterFunc to call after each response.
 func After(fn AfterFunc) {
@@ -61,7 +73,8 @@ func (r *Response) Write(b []byte) (int, error) {
 }
 
 // Body gets the bytes that were written to the response.
-// Will panic until KeepBody(true) is set.
+// Will panic if HasBody() returns false.
+// Use respond.KeepBody(true) to keep copies of bodies.
 func (r *Response) Body() *bytes.Buffer {
 	if !r.keepbody {
 		panic("respond: cannot call Body() when KeepBody(false)")
@@ -73,4 +86,10 @@ func (r *Response) Body() *bytes.Buffer {
 // with.
 func (r *Response) Status() int {
 	return r.status
+}
+
+// HasBody gets whether the Response has a copy of the
+// Body or not.
+func (r *Response) HasBody() bool {
+	return r.keepbody
 }
