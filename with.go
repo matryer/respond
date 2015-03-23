@@ -28,8 +28,12 @@ func (with *W) To(w http.ResponseWriter, r *http.Request) {
 	if encoder, ok = Encoders().Match(r.Header.Get("Accept")); !ok {
 		encoder = DefaultEncoder
 	}
+	// transform the data
+	transformLock.RLock()
+	data := transform(r, with.Data)
+	transformLock.RUnlock()
 	// write response
-	if err := Write(w, r, with.Code, with.Data, encoder); err != nil {
+	if err := Write(w, r, with.Code, data, encoder); err != nil {
 		Err(w, r, with, err)
 	}
 }

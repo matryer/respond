@@ -9,6 +9,8 @@ Simple responding:
 respond.With(http.StatusOK, data).To(w, r)
 ```
 
+Or respond with errors:
+
 ```
 respond.With(http.StatusInternalServerError, err).To(w, r)
 ```
