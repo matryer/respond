@@ -17,6 +17,8 @@ respond.With(http.StatusInternalServerError, err).To(w, r)
 
 ## Advanced
 
+  * Check out the [documentation](http://godoc.org/github.com/matryer/respond)
+
 #### Public view
 
 To control how your own types are exposed through repsond, they can implement the `Public` interface by providing a simple `Public() interface{}` method:
