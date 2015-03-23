@@ -15,24 +15,29 @@ type With struct {
 
 // To writes the repsonse.
 func (with With) To(w http.ResponseWriter, r *http.Request) {
-	// setup headers
-	h := w.Header()
-	setheaders(Headers, h)
-	setheaders(with.header, h)
+	// copy headers
+	copyheaders(with.header, w.Header())
 	// write response
 	if err := Write(w, r, with.Code, with.Data); err != nil {
 		Err(w, r, &with, err)
 	}
 }
 
-// Header specifies a response header.
-// Headers set this way will overwrite any global headers set
-// via respond.Headers.
-func (with With) Header(key, value string) *With {
-	if with.header == nil {
-		with.header = make(http.Header)
-	}
+// SetHeader specifies a response header.
+// Headers set this way will overwrite existing headers.
+// See http.Header.Set.
+func (with With) SetHeader(key, value string) *With {
+	with.initheaders()
 	with.header.Set(key, value)
+	return &with
+}
+
+// AddHeader specifies a response header.
+// Headers set this way will append to existing headers.
+// See http.Header.Add.
+func (with With) AddHeader(key, value string) *With {
+	with.initheaders()
+	with.header.Add(key, value)
 	return &with
 }
 
@@ -45,20 +50,4 @@ var Write = func(w http.ResponseWriter, r *http.Request, status int, data interf
 // Err is called when an internal error occurs while responding.
 var Err = func(w http.ResponseWriter, r *http.Request, with *With, err error) {
 	log.Println()
-}
-
-// Headers are the http.Header items that will be set on every
-// response.
-// Use respond.With{}.Header() for response specific headers.
-var Headers = make(http.Header)
-
-func setheaders(from, to http.Header) {
-	if len(from) == 0 {
-		return
-	}
-	for k, vs := range from {
-		for _, v := range vs {
-			to.Set(k, v)
-		}
-	}
 }
