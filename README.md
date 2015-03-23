@@ -37,6 +37,24 @@ func (a *Auth) Public() interface{} {
   * When you respond with an object of type `Auth`, the map returned by the `Public()` method will be written to the response instead.
   * Returning another object that implements `Public` is OK up to a point. 
 
+#### Headers
+
+`respond.Headers()` allows you to setup headers for every response:
+
+```
+respond.Headers().Set("X-App-Version", "1.0")
+```
+
+Or use the `AddHeader`, `SetHeader` and `DelHeader` fluent functions on `With`:
+
+```
+respond.With(http.StatusOK, data).
+	DelHeader("X-Global").
+	AddHeader("X-RateLimit", rateLimitVal).
+	SetHeader("X-Log", "Some item").
+	To(w, r)
+```
+
 #### Transforming
 
 The data can be transformed by setting a `TransformFunc` to use to modify any results before they are written.
@@ -76,21 +94,3 @@ respond.Encoders().Del(respond.JSON)
 ```
 
 By default, `respond.DefaultEncoder` will be used if no others match.
-
-#### Headers
-
-`respond.Headers()` allows you to setup headers for every response:
-
-```
-respond.Headers().Set("X-App-Version", "1.0")
-```
-
-Or use the `AddHeader`, `SetHeader` and `DelHeader` fluent functions on `With`:
-
-```
-respond.With(http.StatusOK, data).
-	DelHeader("X-Global").
-	AddHeader("X-RateLimit", rateLimitVal).
-	SetHeader("X-Log", "Some item").
-	To(w, r)
-```
