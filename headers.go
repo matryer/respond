@@ -52,7 +52,7 @@ var headers = &safeHeader{
 
 // Headers gets the http.Header items that will be set on every
 // response.
-// Use respond.With{}.Header() for response specific headers.
+// Use respond.With{}.SetHeader() for response specific headers.
 func Headers() interface {
 	Add(key, value string)
 	Del(key string)
