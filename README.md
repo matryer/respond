@@ -126,6 +126,10 @@ Adding your own AfterFunc is as simple as calling:
 ```
 respond.KeepBody(true) // keep a copy of the body for use in the AfterFunc.
 respond.After(func(w *respond.Response, r *http.Request, status int, data interface{}) {
+	// status contains the HTTP status code that was used.
+	// data is the Public transformed data object that was written.
 	// use w.Body() to learn more about the response.
+	// use w.Header() to access the response headers.
+	// use w.Encoder() to access the encoder that was used to write the response.
 })
 ```

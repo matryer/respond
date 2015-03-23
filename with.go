@@ -42,6 +42,7 @@ func (with *W) To(w http.ResponseWriter, r *http.Request) {
 		keepbody: keepbody,
 		status:   with.Code,
 		body:     new(bytes.Buffer),
+		encoder:  encoder,
 	}
 	afterLock.RUnlock()
 

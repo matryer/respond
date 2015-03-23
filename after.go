@@ -49,6 +49,7 @@ type Response struct {
 	keepbody bool
 	body     *bytes.Buffer
 	status   int
+	encoder  Encoder
 }
 
 // Header gets the response headers for the underlying
@@ -86,4 +87,10 @@ func (r *Response) Body() *bytes.Buffer {
 // Body or not.
 func (r *Response) HasBody() bool {
 	return r.keepbody
+}
+
+// Encoder gets the Encoder that was used to encode the data
+// when writing the response.
+func (r *Response) Encoder() Encoder {
+	return r.encoder
 }

@@ -40,5 +40,6 @@ func TestAfter(t *testing.T) {
 	is.Equal(afterData, testdata)
 	is.Equal(afterStatus, http.StatusOK)
 	is.Equal(afterReq, r)
+	is.Equal(afterRes.Encoder(), respond.JSON)
 
 }
