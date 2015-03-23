@@ -1,5 +1,5 @@
 # respond
-API responding for Go
+Idiomatic API responses for Go.
 
 ### Examples
 
