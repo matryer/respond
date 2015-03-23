@@ -94,7 +94,7 @@ By default, `error` types are wrapped into a map, and the `Error() string` is us
 To add your own transformations, call `respond.Transform`:
 
 ```
-respond.Transform(func(r *http.Request, data interface{}) interface{} {
+respond.Transform(func(w http.ResponseWriter, r *http.Request, data interface{}) interface{} {
 	switch o := data.(type) {
 		case error:
 			return map[string]interface{}{"error": o.Error()}

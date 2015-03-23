@@ -23,7 +23,7 @@ func TestTransforming(t *testing.T) {
 	r := request()
 	o := &obj{"Hello world"}
 
-	respond.Transform(func(r *http.Request, data interface{}) interface{} {
+	respond.Transform(func(w http.ResponseWriter, r *http.Request, data interface{}) interface{} {
 		switch o := data.(type) {
 		case *obj:
 			return map[string]interface{}{"object-value": o.Value}

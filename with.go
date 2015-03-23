@@ -33,7 +33,7 @@ func (with *W) To(w http.ResponseWriter, r *http.Request) {
 	data := public(with.Data)
 	// transform the data
 	transformLock.RLock()
-	data = transform(r, data)
+	data = transform(w, r, data)
 	transformLock.RUnlock()
 
 	afterLock.RLock()

@@ -7,7 +7,7 @@ import (
 
 // TransformFunc functions can transform data before it
 // is written.
-type TransformFunc func(r *http.Request, data interface{}) interface{}
+type TransformFunc func(w http.ResponseWriter, r *http.Request, data interface{}) interface{}
 
 // Transform sets the TransformFunc that will be called before
 // data is written.
@@ -19,7 +19,7 @@ func Transform(fn TransformFunc) {
 
 // DefaultTransformFunc is the default TransformFunc that wraps
 // error types.
-var DefaultTransformFunc TransformFunc = func(r *http.Request, data interface{}) interface{} {
+var DefaultTransformFunc TransformFunc = func(w http.ResponseWriter, r *http.Request, data interface{}) interface{} {
 	// transform errors
 	if err, ok := data.(error); ok {
 		return map[string]interface{}{"error": err.Error()}
