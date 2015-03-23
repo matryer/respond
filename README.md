@@ -21,8 +21,11 @@ respond.With{http.StatusInternalServerError, err}.To(w, r)
 respond.Headers().Set("X-App-Version", "1.0")
 ```
 
-Or use the `AddHeader`, `SetHeader` and `DelHeader` functions on `With`:
+Or use the `AddHeader`, `SetHeader` and `DelHeader` fluent functions on `With`:
 
 ```
-respond.With{http.StatusOK, data}.DelHeader("X-Custom").AddHeader("X-RateLimit", rateLimitVal)
+respond.With{http.StatusOK, data}.
+	DelHeader("X-Global").
+	AddHeader("X-RateLimit", rateLimitVal).
+	SetHeader("X-Log", "Some item")
 ```
