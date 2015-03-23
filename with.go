@@ -1,7 +1,6 @@
 package respond
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 )
@@ -36,8 +35,9 @@ func (with *W) To(w http.ResponseWriter, r *http.Request) {
 
 // Write is the function that actually writes the response.
 var Write = func(w http.ResponseWriter, r *http.Request, status int, data interface{}, encoder Encoder) error {
+	w.Header().Set("Content-Type", encoder.ContentType(w, r))
 	w.WriteHeader(status)
-	return json.NewEncoder(w).Encode(data)
+	return encoder.Encode(w, r, data)
 }
 
 // Err is called when an internal error occurs while responding.
