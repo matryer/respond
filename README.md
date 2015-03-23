@@ -26,7 +26,7 @@ Features:
   * Provide `Public` views of your own types
   * Support multiple formats through `Encoders`
   * `Transform` or wrap data before it gets written
-  * `After` callback allows you to run code after every response
+  * `After` callback allows you to run code after every response (includes `respond.LogAfter` to inspect responses)
 
 #### Public view
 
