@@ -28,9 +28,11 @@ func (with *W) To(w http.ResponseWriter, r *http.Request) {
 	if encoder, ok = Encoders().Match(r.Header.Get("Accept")); !ok {
 		encoder = DefaultEncoder
 	}
+	// get the public view (if any)
+	data := public(with.Data)
 	// transform the data
 	transformLock.RLock()
-	data := transform(r, with.Data)
+	data = transform(r, data)
 	transformLock.RUnlock()
 	// write response
 	if err := Write(w, r, with.Code, data, encoder); err != nil {
