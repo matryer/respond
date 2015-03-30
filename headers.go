@@ -58,6 +58,7 @@ func Headers() interface {
 	Del(key string)
 	Get(key string) string
 	Set(key, value string)
+	Clear()
 } {
 	return headers
 }
@@ -103,4 +104,9 @@ func (s *safeHeader) Set(key, value string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.headers.Set(key, value)
+}
+func (s *safeHeader) Clear() {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.headers = make(http.Header)
 }

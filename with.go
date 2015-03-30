@@ -21,6 +21,13 @@ type W struct {
 
 // To writes the repsonse.
 func (with *W) To(w http.ResponseWriter, r *http.Request) {
+	if with.header == nil && len(headers.headers) > 0 {
+		// copy global headers if none are set
+		// NOTE: if some are set, they will have copied the global
+		// ones already.
+		with.header = make(http.Header)
+		copyheaders(headers.headers, with.header)
+	}
 	// copy headers to ResponseWriter
 	copyheaders(with.header, w.Header())
 	// find the encoder

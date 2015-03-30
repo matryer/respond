@@ -75,6 +75,30 @@ func TestHeadersWithHeader(t *testing.T) {
 	is.Nil(w.Header()["X-Global2"])
 }
 
+func TestHeadersWithNoHeaders(t *testing.T) {
+	is := is.New(t)
+	w := httptest.NewRecorder()
+	r := request()
+	respond.Headers().Clear()
+	respond.Headers().Add("X-List", "1")
+	respond.Headers().Add("X-List", "2")
+	respond.Headers().Add("X-List", "3")
+	respond.Headers().Set("X-Global", "Value 2")
+	respond.Headers().Set("X-Global2", "Value 2")
+	respond.Headers().Set("X-Custom", "should be set")
+	respond.With(
+		http.StatusOK,
+		testdata,
+	).To(w, r)
+	is.Equal(http.StatusOK, w.Code)
+	var data map[string]interface{}
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
+	is.Equal(data, testdata)
+	is.Equal(w.Header().Get("X-Custom"), "should be set")
+	is.Equal(w.Header().Get("X-Global"), "Value 2")
+	is.Equal(w.Header()["X-List"], []string{"1", "2", "3"})
+}
+
 type testEncoder struct{}
 
 func (testEncoder) Encode(w http.ResponseWriter, r *http.Request, v interface{}) error {
