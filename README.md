@@ -1,6 +1,8 @@
 # respond
 Idiomatic API responses for Go.
 
+See the [API documentation](http://godoc.org/github.com/matryer/respond) or read this page for an overview.
+
 ### Examples
 
 Simple responding:
@@ -14,6 +16,12 @@ Or respond with errors:
 ```
 respond.With(http.StatusInternalServerError, err).To(w, r)
 ```
+
+Like the `http` package, there are some helper functions too:
+
+  * `respond.WithNotFound().To(w, r)`
+  * `repsond.WithRedirectTemporary(location).To(w, r)`
+  * `repsond.WithRedirectPermanent(location).To(w, r)`
 
 ## Advanced
 
