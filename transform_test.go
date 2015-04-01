@@ -13,10 +13,6 @@ type obj struct {
 	Value string `json:"value"`
 }
 
-func TestDefaultTransforming(t *testing.T) {
-
-}
-
 func TestTransforming(t *testing.T) {
 	is := is.New(t)
 	w := httptest.NewRecorder()
