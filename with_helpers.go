@@ -9,6 +9,19 @@ const (
 	headerLocation = "Location"
 )
 
+// ErrStatusCode is an error that wraps an HTTP status code.
+type ErrStatusCode int
+
+func (e ErrStatusCode) Error() string {
+	return http.StatusText(int(e))
+}
+
+// WithErr indicates an error response with the specified
+// HTTP status code.
+func WithErr(status int) *W {
+	return With(status, ErrStatusCode(status))
+}
+
 // ErrNotFound is the error that is responded when WithNotFound
 // is called.
 var ErrNotFound = errors.New("not found")
