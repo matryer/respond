@@ -1,7 +1,6 @@
 package respond
 
 import (
-	"encoding/json"
 	"net/http"
 	"sync"
 )
@@ -12,6 +11,12 @@ type Responder struct {
 	m map[*http.Request]*Response
 	// wrapped keeps track of what has been wrapped or not.
 	wrapped map[*http.Request]bool
+	// encoders holds the Encoder objects that this Responder
+	// will support.
+	encoders *encodersMap
+	// DefaultEncoder is the Encoder to use when a better match
+	// it not found.
+	DefaultEncoder Encoder
 	// lock is the sync.RWMutex used to ensure safety.
 	lock sync.RWMutex
 }
@@ -23,6 +28,10 @@ func New() *Responder {
 	return &Responder{
 		m:       make(map[*http.Request]*Response),
 		wrapped: make(map[*http.Request]bool),
+		encoders: &encodersMap{
+			encoders: map[string]Encoder{"json": JSON},
+		},
+		DefaultEncoder: JSON,
 	}
 }
 
@@ -64,9 +73,30 @@ func (d *Responder) finish(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *Responder) write(w http.ResponseWriter, r *http.Request, response *Response) {
+
+	// find the encoder
+	var encoder Encoder
+	var ok bool
+	if encoder, ok = d.encoders.Match(r.Header.Get("Accept")); !ok {
+		encoder = d.DefaultEncoder
+	}
+
 	// write response
+	w.Header().Set("Content-Type", encoder.ContentType(w, r))
 	w.WriteHeader(response.status)
-	json.NewEncoder(w).Encode(response.data)
+	encoder.Encode(w, r, response.data)
+
+}
+
+// Encoders allows the adding, removing and matching of encoders
+// by fuzzy strings, usually the Accept request header.
+// By default, JSON is added.
+func (d *Responder) Encoders() interface {
+	Add(match string, encoder Encoder)
+	Match(s string) (Encoder, bool)
+	Del(e Encoder)
+} {
+	return d.encoders
 }
 
 // Handler wraps a http.Handler that makes use of respond.
