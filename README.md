@@ -147,3 +147,38 @@ responder := respond.New()
 handler := &MyHandler{}
 http.ListenAndServe(":8080", responder.Handler(handler))
 ```
+
+## Advanced
+
+### Status only data
+
+Some responses, such as those submitted with `WithStatus` have no data. Respond will call the `StatusData` or `RedirectData` function fields to generate default payloads.
+
+You are free to set these functions to anything you like:
+
+```
+responder := respond.New()
+responder.StatusData = func(w http.ResponseWriter, r *http.Request, status int) interface{} {
+  return map[string]interface{}{
+    "status": http.StatusText(status),
+    "code":   status,
+  }
+}
+```
+
+  * Set them once before your server has started to avoid data races
+
+### Encoders
+
+To manage encoders, import the [github.com/matryer/respond/encoding](http://godoc.org/github.com/matryer/respond/encoding) package, create a new `Encoders` object and add your supported `Encoder` objects.
+
+Then, set the `responder.Encoder` function field to the `Encoder.EncoderFunc` function. Respond will look inside your new `Encoders` object for values matching the `Accept` header of the client.
+
+```
+enc := encoding.New()
+enc.Add(respond.JSON)
+enc.Add(YourEncoder)
+
+responder := respond.New()
+responder.Encoder = enc.EncoderFunc
+```
