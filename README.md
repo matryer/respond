@@ -12,7 +12,7 @@ Package respond provides low-touch idiomatic API responses for Go.
 
 ## Usage
 
-Step 1. Create and configure a Responder
+#### Step 1. Create and configure a Responder
 
 ```
 responder := respond.New()
@@ -21,7 +21,7 @@ responder := respond.New()
   * Generally create one per app
   * Create it at the same time you setup your server (usually in `main.go`)
 
-Step 2. Wrap your `http.HandlerFunc` or `http.Handler` using the responder
+#### Step 2. Wrap your `http.HandlerFunc` or `http.Handler` using the responder
 
 ```
 // wrap a handler
@@ -33,7 +33,7 @@ fn = responder.HandlerFunc(fn)
 
   * Wrapping the handlers with the responder allows them to use the `respond.With` function
 
-Step 3. Use `respond.With` in your handlers
+#### Step 3. Use `respond.With` in your handlers
 
 ```
 func handleSomething(w http.ResponseWriter, r *http.Request) {
