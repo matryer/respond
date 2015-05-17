@@ -14,11 +14,9 @@ var (
 	responded  = make(map[*http.Request]bool)
 )
 
-var (
-	// ManyResponsesPanic indicates whether repsond will panic if
-	// user code attempts to make multiple responses.
-	ManyResponsesPanic = true
-)
+// ManyResponsesPanic indicates whether repsond will panic if
+// user code attempts to make multiple responses.
+var ManyResponsesPanic = true
 
 // Responder provides the ability to respond using repsond.With calls.
 type Responder struct {
