@@ -1,80 +1,72 @@
 package respond
 
-import (
-	"bytes"
-	"log"
-	"net/http"
-)
+import "net/http"
 
-// With specifies the status code and data to repsond with.
-func With(status int, data interface{}) *W {
-	return &W{Code: status, Data: data}
+func getResponder(r *http.Request) *Responder {
+	// get the responder for this request
+	mutex.RLock()
+	responder, ok := responders[r]
+	mutex.RUnlock()
+	if !ok {
+		panic("respond: must wrap with Handler or HandlerFunc")
+	}
+	if ManyResponsesPanic && responder == nil {
+		// there was a responder there - but it was set to nil - which
+		// means we've already responded.
+		panic("respond: multiple responses")
+	}
+	return responder
 }
 
-// W holds details about the response that will be made
-// when To is called.
-type W struct {
-	Code   int
-	Data   interface{}
-	header http.Header
-}
+// With writes a response.
+func With(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
 
-// To writes the repsonse.
-func (with *W) To(w http.ResponseWriter, r *http.Request) {
-	if with.header == nil && len(headers.headers) > 0 {
-		// copy global headers if none are set
-		// NOTE: if some are set, they will have copied the global
-		// ones already.
-		with.header = make(http.Header)
-		copyheaders(headers.headers, with.header)
-	}
-	// copy headers to ResponseWriter
-	copyheaders(with.header, w.Header())
-	// find the encoder
-	var encoder Encoder
-	var ok bool
-	if encoder, ok = Encoders().Match(r.Header.Get("Accept")); !ok {
-		encoder = DefaultEncoder
-	}
-	// get the public view (if any)
-	data := public(with.Data)
-	// transform the data
-	transformLock.RLock()
-	data = transform(w, r, data)
-	transformLock.RUnlock()
+	responder := getResponder(r)
 
-	afterLock.RLock()
-	res := &Response{
-		w:        w,
-		keepbody: keepbody,
-		status:   with.Code,
-		body:     new(bytes.Buffer),
-		encoder:  encoder,
-	}
-	afterLock.RUnlock()
+	// mark the responders[r] as nil - which means we have
+	// responded.
+	defer func() {
+		mutex.Lock()
+		responders[r] = nil
+		mutex.Unlock()
+	}()
 
-	// write response
-	if err := Write(res, r, with.Code, data, encoder); err != nil {
-		Err(w, r, with, err)
+	if responder.Before != nil {
+		status, data = responder.Before(w, r, status, data)
+	}
+	if responder.After != nil {
+		defer responder.After(w, r, status, data)
 	}
 
-	// call after (if there is one)
-	if after != nil {
-		afterLock.RLock()
-		after(res, r, with.Code, data)
-		afterLock.RUnlock()
-	}
-}
-
-// Write is the function that sets the Content-Type, writes the header
-// and encodes the body using the specified Encoder.
-var Write = func(w http.ResponseWriter, r *http.Request, status int, data interface{}, encoder Encoder) error {
-	w.Header().Set("Content-Type", encoder.ContentType(w, r))
+	// write the response
 	w.WriteHeader(status)
-	return encoder.Encode(w, r, data)
+	encoder := responder.Encoder(w, r)
+	w.Header().Set("Content-Type", encoder.ContentType(w, r))
+	if err := encoder.Encode(w, r, data); err != nil {
+		responder.OnErr(w, r, err)
+	}
+
 }
 
-// Err is called when an internal error occurs while responding.
-var Err = func(w http.ResponseWriter, r *http.Request, with *W, err error) {
-	log.Println("Err:", r.URL.String(), err)
+// WithStatus responds with the specified status.
+// The body will be taken from StatusData.
+func WithStatus(w http.ResponseWriter, r *http.Request, status int) {
+	responder := getResponder(r)
+	With(w, r, status, responder.StatusData(w, r, status))
+}
+
+// WithRedirectTemporary sets the Location header and responds with
+// the http.StatusTemporaryRedirect status.
+func WithRedirectTemporary(w http.ResponseWriter, r *http.Request, location string) {
+	responder := getResponder(r)
+	w.Header().Set("Location", location)
+	With(w, r, http.StatusTemporaryRedirect, responder.RedirectData(w, r, http.StatusTemporaryRedirect, location))
+}
+
+// WithRedirectPermanent sets the Location header and responds with
+// the http.StatusMovedPermanently status.
+func WithRedirectPermanent(w http.ResponseWriter, r *http.Request, location string) {
+	responder := getResponder(r)
+	w.Header().Set("Location", location)
+	With(w, r, http.StatusMovedPermanently, responder.RedirectData(w, r, http.StatusMovedPermanently, location))
 }

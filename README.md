@@ -1,143 +1,107 @@
 # respond
-Idiomatic API responses for Go.
 
-See the [API documentation](http://godoc.org/github.com/matryer/respond) or read this page for an overview.
+Package respond provides low-touch idiomatic API responses for Go.
 
-### Examples
+## Features
 
-Simple responding:
+  * Idiomatic way of responding to data APIs using `respond.With`
+  * Encoder abstraction lets you easily speak different formats
+  * `Transform` allows you to envelope data or handle data types differently
+  * `Before` and `After` function fields allow you to envelope and mutate data, set common HTTP headers, log activity etc.
+  * Protected against multiple responses
+  * Helpers including `repsond.With`, `respond.WithStatus`, `respond.WithRedirect*` etc.
 
-```
-respond.With(http.StatusOK, data).To(w, r)
-```
+## Usage
 
-Or respond with errors:
-
-```
-respond.With(http.StatusInternalServerError, err).To(w, r)
-```
-
-Like the `http` package, there are some helper functions too:
-
-  * `respond.WithNotFound().To(w, r)`
-  * `repsond.WithRedirectTemporary(location).To(w, r)`
-  * `repsond.WithRedirectPermanent(location).To(w, r)`
-
-## Advanced
-
-Check out the [documentation](http://godoc.org/github.com/matryer/respond)
-
-Features:
-
-  * Simple API: `respond.With(http.StatusOK, data).To(w, r)`
-  * Set common `Headers` that will be written with every response
-  * Provide `Public` views of your own types
-  * Support multiple formats through `Encoders`
-  * `Transform` or wrap data before it gets written
-  * `After` callback allows you to run code after every response (includes `respond.LogAfter` to inspect responses)
-
-#### Headers
-
-`respond.Headers()` allows you to setup headers for every response:
+#### Step 1. Create and configure a Responder
 
 ```
-respond.Headers().Set("X-App-Version", "1.0")
+responder := respond.New()
 ```
 
-Or use the `AddHeader`, `SetHeader` and `DelHeader` fluent functions on `With`:
+  * Generally create one per app
+  * Create it at the same time you setup your server (usually in `main.go`)
+
+#### Step 2. Wrap your `http.HandlerFunc` or `http.Handler` using the responder
 
 ```
-respond.With(http.StatusOK, data).
-	DelHeader("X-Global").
-	AddHeader("X-RateLimit", rateLimitVal).
-	SetHeader("X-Log", "Some item").
-	To(w, r)
+// wrap a handler
+handler = responder.Handler(handler)
+
+// wrap a HandlerFunc
+fn = responder.HandlerFunc(fn)
 ```
 
-#### Public view
+  * Wrapping the handlers with the responder allows them to use the `respond.With` function
 
-To control how your own types are exposed through repsond, they can implement the `Public` interface by providing a simple `Public() interface{}` method:
-
-```
-type Auth struct {
-	Secret string
-	Key string
-}
-
-func (a *Auth) Public() interface{} {
-	return map[string]interface{}{"Key": a.Key}
-}
-```
-
-  * When you respond with an object of type `Auth`, the map returned by the `Public()` method will be written to the response instead.
-  * Returning another object that implements `Public` is OK up to a point. 
-
-#### Encoders
-
-By default, repsond speaks JSON. But you can add other encoders:
+#### Step 3. Use `respond.With` in your handlers
 
 ```
-respond.Encoders().Add("xml", YourXMLEncoder())
-```
+func handleSomething(w http.ResponseWriter, r *http.Request) {
 
-And you can stop respond from speaking JSON like this:
-
-```
-respond.Encoders().Del(respond.JSON)
-```
-
-By default, `respond.DefaultEncoder` will be used if no others match.
-
-
-#### Transforming
-
-The data can be transformed by setting a `TransformFunc` to modify any results before they are written.
-
-By default, `error` types are wrapped into a map, and the `Error() string` is used as the value:
-
-```
-{"error":"error message"}
-```
-
-To add your own transformations, call `respond.Transform`:
-
-```
-respond.Transform(func(w http.ResponseWriter, r *http.Request, data interface{}) interface{} {
-	switch o := data.(type) {
-		case error:
-			return map[string]interface{}{"error": o.Error()}
-		case YourType:
-			return map[string]interface{}{"name": o.Name()}
+	data := map[string]interface{}{
+		"something": true,
+		"probably-from": "database",
 	}
-	return data // by default, don't transform it
-})
+
+	respond.With(w, r, http.StatusOK, data)
+
+}
 ```
 
-#### After
+## Panics
 
-Calling `respond.After` will register an `AfterFunc` that will get called after each response has finished being written.
+#### `respond: multiple responses`
 
-Perfect for:
-
-  * Debugging
-  * Logging
-  * Cleaning up request specific resources
-
-A simple logging AfterFunc has been provided which can be enabled:
+Most requests need only one response, but a common bug in code is to call `respond.With` many times. Consider this example:
 
 ```
-respond.After(respond.LogAfter)
+func handleSomething(w http.ResponseWriter, r *http.Request) {
+  
+  data, err := LoadDataFromDatabase()
+  if err != nil {
+    respond.With(w, r, http.StatusInternalServerError, err)
+    // NOTE: missing return here
+  }
+  respond.With(w, r, http.StatusOK, data)
+
+}
 ```
 
-Adding your own AfterFunc is as simple as calling:
+After the error case, the code should `return` to prevent future code from running.
+
+The solution is to make sure `respond.With` is called only once per request.
+
+  * Advanced: You can prevent this panic by setting `respond.ManyResponsesPanic = false`
+
+#### `respond: must wrap with Handler or HandlerFunc`
+
+In order to use `respond.With` you must wrap http.Handler and http.HandlerFunc objects. Wrapping the handlers allows respond to setup, and teardown things it needs in order to provide responding capabilities. It is also how `respond.With` knows which `respond.Responder` to use.
+
+This:
 
 ```
-respond.KeepBody(true) // keep a copy of the body for use in the AfterFunc.
-respond.After(func(w *respond.Response, r *http.Request, status int, data interface{}) {
-	// status contains the HTTP status code that was used.
-	// data is the Public transformed data object that was written.
-	// use w.Body() to learn more about the response.
-	// use w.Header() to access the response headers.
-	// use w.Encoder() to access the encoder that was used to write the response.
-})
+http.HandleFunc("/hello", HelloServer)
+```
+
+Becomes:
+
+```
+responder := respond.New()
+http.HandleFunc("/hello", responder.HandlerFunc(HelloServer))
+```
+
+or this:
+
+```
+handler := &MyHandler{}
+http.ListenAndServe(":8080", handler)
+```
+
+becomes:
+
+```
+responder := respond.New()
+handler := &MyHandler{}
+http.ListenAndServe(":8080", responder.Handler(handler))
 ```

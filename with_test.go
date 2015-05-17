@@ -2,7 +2,6 @@ package respond_test
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,116 +10,41 @@ import (
 	"github.com/matryer/respond"
 )
 
-var testdata = map[string]interface{}{"test": true}
-
-func request() *http.Request {
-	r, _ := http.NewRequest("GET", "Something", nil)
-	return r
-}
-
-func TestWith(t *testing.T) {
+func TestWithStatus(t *testing.T) {
 	is := is.New(t)
+
+	responder := respond.New()
 	w := httptest.NewRecorder()
-	r := request()
-	respond.With(
-		http.StatusOK,
-		testdata,
-	).To(w, r)
-	is.Equal(http.StatusOK, w.Code)
+	r := newTestRequest()
+	responder.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		respond.WithStatus(w, r, http.StatusTeapot)
+	})(w, r)
+
+	// assert it was written
+	is.Equal(http.StatusTeapot, w.Code)
 	var data map[string]interface{}
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
-	is.Equal(data, testdata)
+	is.Equal(data["status"], http.StatusText(http.StatusTeapot))
+	is.Equal(data["code"], http.StatusTeapot)
+
 }
 
-func TestWithHeader(t *testing.T) {
+func TestWithRedirectTemporary(t *testing.T) {
 	is := is.New(t)
+
+	responder := respond.New()
 	w := httptest.NewRecorder()
-	r := request()
-	respond.With(
-		http.StatusOK,
-		testdata,
-	).SetHeader("X-Custom", "Value").To(w, r)
-	is.Equal(http.StatusOK, w.Code)
+	r := newTestRequest()
+	responder.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		respond.WithRedirectTemporary(w, r, "/new/path")
+	})(w, r)
+
+	// assert it was written
+	is.Equal(http.StatusTemporaryRedirect, w.Code)
 	var data map[string]interface{}
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
-	is.Equal(data, testdata)
-	is.Equal(w.Header().Get("X-Custom"), "Value")
-}
+	is.Equal(data["status"], http.StatusText(http.StatusTemporaryRedirect))
+	is.Equal(data["code"], http.StatusTemporaryRedirect)
+	is.Equal(w.HeaderMap.Get("Location"), "/new/path")
 
-func TestHeadersWithHeader(t *testing.T) {
-	is := is.New(t)
-	w := httptest.NewRecorder()
-	r := request()
-	respond.Headers().Add("X-List", "1")
-	respond.Headers().Add("X-List", "2")
-	respond.Headers().Add("X-List", "3")
-	respond.Headers().Set("X-Global", "Value 2")
-	respond.Headers().Set("X-Global2", "Value 2")
-	respond.Headers().Set("X-Custom", "should be overwritten")
-	respond.With(
-		http.StatusOK,
-		testdata,
-	).
-		SetHeader("X-Custom", "overwrite").
-		AddHeader("X-List", "4").
-		DelHeader("X-Global2").
-		To(w, r)
-	is.Equal(http.StatusOK, w.Code)
-	var data map[string]interface{}
-	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
-	is.Equal(data, testdata)
-	is.Equal(w.Header().Get("X-Custom"), "overwrite")
-	is.Equal(w.Header().Get("X-Global"), "Value 2")
-	is.Equal(w.Header()["X-List"], []string{"1", "2", "3", "4"})
-	is.Nil(w.Header()["X-Global2"])
-}
-
-func TestHeadersWithNoHeaders(t *testing.T) {
-	is := is.New(t)
-	w := httptest.NewRecorder()
-	r := request()
-	respond.Headers().Clear()
-	respond.Headers().Add("X-List", "1")
-	respond.Headers().Add("X-List", "2")
-	respond.Headers().Add("X-List", "3")
-	respond.Headers().Set("X-Global", "Value 2")
-	respond.Headers().Set("X-Global2", "Value 2")
-	respond.Headers().Set("X-Custom", "should be set")
-	respond.With(
-		http.StatusOK,
-		testdata,
-	).To(w, r)
-	is.Equal(http.StatusOK, w.Code)
-	var data map[string]interface{}
-	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
-	is.Equal(data, testdata)
-	is.Equal(w.Header().Get("X-Custom"), "should be set")
-	is.Equal(w.Header().Get("X-Global"), "Value 2")
-	is.Equal(w.Header()["X-List"], []string{"1", "2", "3"})
-}
-
-type testEncoder struct{}
-
-func (testEncoder) Encode(w http.ResponseWriter, r *http.Request, v interface{}) error {
-	io.WriteString(w, "test encoder")
-	return nil
-}
-func (testEncoder) ContentType(w http.ResponseWriter, r *http.Request) string {
-	return "test/encoder"
-}
-
-func TestEncoding(t *testing.T) {
-	is := is.New(t)
-	w := httptest.NewRecorder()
-	r := request()
-	r.Header.Set("Accept", "application/original")
-	respond.Encoders().Del(respond.JSON)
-	respond.Encoders().Add("original", &testEncoder{})
-	respond.With(
-		http.StatusOK,
-		testdata,
-	).To(w, r)
-	is.Equal(http.StatusOK, w.Code)
-	is.Equal(w.Body.String(), `test encoder`)
-	is.Equal(w.HeaderMap.Get("Content-Type"), "test/encoder")
 }
