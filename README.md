@@ -1,4 +1,4 @@
-# respond
+# respond [![GoDoc](https://godoc.org/github.com/matryer/respond?status.svg)](https://godoc.org/github.com/matryer/respond)
 
 Package respond provides low-touch idiomatic API responses for Go.
 
@@ -19,7 +19,7 @@ Once you've installed respond (see below), responding with a data payload is as 
 // respond with data
 respond.With(w, r, http.StatusOK, data)
 
-// respond with an error
+// or respond with an error
 if err := doSomething(); err != nil {
   respond.With(w, r, http.StatusInternalServerError, err)
   return
@@ -61,6 +61,7 @@ responder := respond.New()
 
   * Generally create one per app
   * Create it at the same time you setup your server (usually in `main.go`)
+  * Look at the [fields inside the Responder struct](http://godoc.org/github.com/matryer/respond#Responder) for details on how you can customize respond
 
 #### Step 2. Wrap your `http.HandlerFunc` or `http.Handler` using the responder
 
