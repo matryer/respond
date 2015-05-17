@@ -1,2 +1,2 @@
-// Package respond provides responding capabilities to data services.
+// Package respond provides idiomatic API responses.
 package respond

@@ -4,14 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"sync"
-
 	"net/http"
+	"sync"
 )
 
 var (
 	mutex      sync.RWMutex
 	responders = make(map[*http.Request]*Responder)
+	responded  = make(map[*http.Request]bool)
+)
+
+var (
+	// ManyResponsesPanic indicates whether repsond will panic if
+	// user code attempts to make multiple responses.
+	ManyResponsesPanic = true
 )
 
 // Responder provides the ability to respond using repsond.With calls.
@@ -23,16 +29,20 @@ type Responder struct {
 
 	// OnErr is a function field that is called when an error occurs
 	// during the responding process.
-	//     - If Encoder.Encode returns an error
+	// OnErr is called if Encoder.Encode returns an error.
 	// OnErrLog and OnErrPanic are two provided options with
 	// OnErrLog being the default.
 	OnErr func(w http.ResponseWriter, r *http.Request, err error)
 
-	// Transform changes the status and data before it is written.
-	// By default, has no effect.
-	// Useful for handling different types of data differently (like errors)
-	// or enveloping the response.
-	Transform func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{})
+	// Before is called for before each response is written and gives user code the chance
+	// to mutate the status or data.
+	// Useful for handling different types of data differently (like errors),
+	// enveloping the response, setting common HTTP headers etc.
+	Before func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{})
+
+	// After is called after each response.
+	// Useful for logging activity after a response has been written.
+	After func(w http.ResponseWriter, r *http.Request, status int, data interface{})
 }
 
 // New makes a new Responder.
@@ -53,10 +63,25 @@ func With(w http.ResponseWriter, r *http.Request, status int, data interface{}) 
 	if !ok {
 		panic("respond: must wrap with Handler or HandlerFunc")
 	}
+	if ManyResponsesPanic && responder == nil {
+		// there was a responder there - but it was set to nil - which
+		// means we've already responded.
+		panic("respond: multiple responses")
+	}
 
-	// optionally transform the data
-	if responder.Transform != nil {
-		status, data = responder.Transform(w, r, status, data)
+	// mark the responders[r] as nil - which means we have
+	// responded.
+	defer func() {
+		mutex.Lock()
+		responders[r] = nil
+		mutex.Unlock()
+	}()
+
+	if responder.Before != nil {
+		status, data = responder.Before(w, r, status, data)
+	}
+	if responder.After != nil {
+		defer responder.After(w, r, status, data)
 	}
 
 	// write the response
@@ -66,6 +91,7 @@ func With(w http.ResponseWriter, r *http.Request, status int, data interface{}) 
 	if err := encoder.Encode(w, r, data); err != nil {
 		responder.OnErr(w, r, err)
 	}
+
 }
 
 // OnErrLog logs the error using log.Println.
@@ -94,6 +120,7 @@ func (d *Responder) HandlerFunc(fn http.HandlerFunc) http.HandlerFunc {
 		defer func() {
 			mutex.Lock()
 			delete(responders, r)
+			delete(responded, r)
 			mutex.Unlock()
 		}()
 		fn(w, r)
