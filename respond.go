@@ -43,55 +43,45 @@ type Responder struct {
 	// After is called after each response.
 	// Useful for logging activity after a response has been written.
 	After func(w http.ResponseWriter, r *http.Request, status int, data interface{})
+
+	// StatusData is a function field that gets the data to respond with when
+	// WithStatus is called.
+	// By default, the function will return an object that looks like this:
+	//     {"status":"Not Found","code":404}
+	StatusData func(w http.ResponseWriter, r *http.Request, status int) interface{}
+
+	// RedirectData is a function field that gets the data to respond with when
+	// WithRedirect* is called.
+	// By default, the function will return an object that looks like this:
+	//     {"status":"Temporary Redirect","code":301,"location":"/path"}
+	RedirectData func(w http.ResponseWriter, r *http.Request, status int, location string) interface{}
+}
+
+// DefaultStatusData is the default StatusData function for a Responder.
+func DefaultStatusData(w http.ResponseWriter, r *http.Request, status int) interface{} {
+	return map[string]interface{}{
+		"status": http.StatusText(status),
+		"code":   status,
+	}
+}
+
+// DefaultRedirectData is the default RedirectData function for a Responder.
+func DefaultRedirectData(w http.ResponseWriter, r *http.Request, status int, location string) interface{} {
+	return map[string]interface{}{
+		"status":   http.StatusText(status),
+		"code":     status,
+		"location": location,
+	}
 }
 
 // New makes a new Responder.
 func New() *Responder {
 	return &Responder{
-		Encoder: func(http.ResponseWriter, *http.Request) Encoder { return JSON },
-		OnErr:   OnErrLog,
+		Encoder:      func(http.ResponseWriter, *http.Request) Encoder { return JSON },
+		OnErr:        OnErrLog,
+		StatusData:   DefaultStatusData,
+		RedirectData: DefaultRedirectData,
 	}
-}
-
-// With writes a response.
-func With(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
-
-	// get the responder for this request
-	mutex.RLock()
-	responder, ok := responders[r]
-	mutex.RUnlock()
-	if !ok {
-		panic("respond: must wrap with Handler or HandlerFunc")
-	}
-	if ManyResponsesPanic && responder == nil {
-		// there was a responder there - but it was set to nil - which
-		// means we've already responded.
-		panic("respond: multiple responses")
-	}
-
-	// mark the responders[r] as nil - which means we have
-	// responded.
-	defer func() {
-		mutex.Lock()
-		responders[r] = nil
-		mutex.Unlock()
-	}()
-
-	if responder.Before != nil {
-		status, data = responder.Before(w, r, status, data)
-	}
-	if responder.After != nil {
-		defer responder.After(w, r, status, data)
-	}
-
-	// write the response
-	w.WriteHeader(status)
-	encoder := responder.Encoder(w, r)
-	w.Header().Set("Content-Type", encoder.ContentType(w, r))
-	if err := encoder.Encode(w, r, data); err != nil {
-		responder.OnErr(w, r, err)
-	}
-
 }
 
 // OnErrLog logs the error using log.Println.

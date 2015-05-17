@@ -9,6 +9,7 @@ Package respond provides low-touch idiomatic API responses for Go.
   * `Transform` allows you to envelope data or handle data types differently
   * `Before` and `After` function fields allow you to envelope and mutate data, set common HTTP headers, log activity etc.
   * Protected against multiple responses
+  * Helpers including `repsond.With`, `respond.WithStatus`, `respond.WithRedirect*` etc.
 
 ## Usage
 
