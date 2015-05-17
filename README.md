@@ -47,3 +47,60 @@ func handleSomething(w http.ResponseWriter, r *http.Request) {
 
 }
 ```
+
+## Panics
+
+#### `respond: multiple responses`
+
+Most requests need only one response, but a common bug in code is to call `respond.With` many times. Consider this example:
+
+```
+func handleSomething(w http.ResponseWriter, r *http.Request) {
+  
+  data, err := LoadDataFromDatabase()
+  if err != nil {
+    respond.With(w, r, http.StatusInternalServerError, err)
+    // NOTE: missing return here
+  }
+  respond.With(w, r, http.StatusOK, data)
+
+}
+```
+
+After the error case, the code should `return` to prevent future code from running.
+
+The solution is to make sure `respond.With` is called only once per request.
+
+  * Advanced: You can prevent this panic by setting `respond.ManyResponsesPanic = false`
+
+#### `respond: must wrap with Handler or HandlerFunc`
+
+In order to use `respond.With` you must wrap http.Handler and http.HandlerFunc objects. Wrapping the handlers allows respond to setup, and teardown things it needs in order to provide responding capabilities. It is also how `respond.With` knows which `respond.Responder` to use.
+
+This:
+
+```
+http.HandleFunc("/hello", HelloServer)
+```
+
+Becomes:
+
+```
+responder := respond.New()
+http.HandleFunc("/hello", responder.HandlerFunc(HelloServer))
+```
+
+or this:
+
+```
+handler := &MyHandler{}
+http.ListenAndServe(":8080", handler)
+```
+
+becomes:
+
+```
+responder := respond.New()
+handler := &MyHandler{}
+http.ListenAndServe(":8080", responder.Handler(handler))
+```
