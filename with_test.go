@@ -36,7 +36,7 @@ func TestWithRedirectTemporary(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := newTestRequest()
 	responder.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		respond.WithRedirectTemporary(w, r, "/new/path")
+		respond.WithRedirect(w, r, http.StatusTemporaryRedirect, "/new/path")
 	})(w, r)
 
 	// assert it was written

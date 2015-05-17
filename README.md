@@ -11,7 +11,47 @@ Package respond provides low-touch idiomatic API responses for Go.
   * Protected against multiple responses
   * Helpers including `repsond.With`, `respond.WithStatus`, `respond.WithRedirect*` etc.
 
-## Usage
+## Usage
+
+Once you've installed respond (see below), responding with a data payload is as simple as calling `respond.With`:
+
+```
+// respond with data
+respond.With(w, r, http.StatusOK, data)
+
+// respond with an error
+if err := doSomething(); err != nil {
+  respond.With(w, r, http.StatusInternalServerError, err)
+  return
+}
+```
+
+Additional helpers let you easily respond with an HTTP status code:
+
+```
+respond.WithStatus(w, r, http.StatusNotFound)
+return
+```
+
+Or redirects:
+
+```
+respond.WithRedirect(w, r, http.StatusTemporaryRedirect, "/new/path")
+```
+
+## Getting started with respond
+
+Get it:
+
+```
+go get github.com/matryer/respond
+```
+
+And import it:
+
+```
+import github.com/matryer/respond
+```
 
 #### Step 1. Create and configure a Responder
 
@@ -33,6 +73,7 @@ fn = responder.HandlerFunc(fn)
 ```
 
   * Wrapping the handlers with the responder allows them to use the `respond.With` function
+  * Calling `respond.With` inside unwrapped handlers will cause a panic.
 
 #### Step 3. Use `respond.With` in your handlers
 

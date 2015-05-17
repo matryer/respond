@@ -27,7 +27,6 @@ type Responder struct {
 
 	// OnErr is a function field that is called when an error occurs
 	// during the responding process.
-	// OnErr is called if Encoder.Encode returns an error.
 	// OnErrLog and OnErrPanic are two provided options with
 	// OnErrLog being the default.
 	OnErr func(w http.ResponseWriter, r *http.Request, err error)

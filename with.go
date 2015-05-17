@@ -1,6 +1,9 @@
 package respond
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 func getResponder(r *http.Request) *Responder {
 	// get the responder for this request
@@ -55,18 +58,14 @@ func WithStatus(w http.ResponseWriter, r *http.Request, status int) {
 	With(w, r, status, responder.StatusData(w, r, status))
 }
 
-// WithRedirectTemporary sets the Location header and responds with
-// the http.StatusTemporaryRedirect status.
-func WithRedirectTemporary(w http.ResponseWriter, r *http.Request, location string) {
+// WithRedirect sets the Location header and responds with
+// the specified status.
+func WithRedirect(w http.ResponseWriter, r *http.Request, status int, location string) {
 	responder := getResponder(r)
+	if status != http.StatusTemporaryRedirect && status != http.StatusMovedPermanently {
+		// report error, but carry on
+		responder.OnErr(w, r, fmt.Errorf("respond.WithRedirect with non-redirect status: %s (%d)", http.StatusText(status), status))
+	}
 	w.Header().Set("Location", location)
-	With(w, r, http.StatusTemporaryRedirect, responder.RedirectData(w, r, http.StatusTemporaryRedirect, location))
-}
-
-// WithRedirectPermanent sets the Location header and responds with
-// the http.StatusMovedPermanently status.
-func WithRedirectPermanent(w http.ResponseWriter, r *http.Request, location string) {
-	responder := getResponder(r)
-	w.Header().Set("Location", location)
-	With(w, r, http.StatusMovedPermanently, responder.RedirectData(w, r, http.StatusMovedPermanently, location))
+	With(w, r, status, responder.RedirectData(w, r, status, location))
 }
