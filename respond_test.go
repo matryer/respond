@@ -12,28 +12,50 @@ import (
 
 var testdata = map[string]interface{}{"test": true}
 
-func request() *http.Request {
-	r, _ := http.NewRequest("GET", "Something", nil)
+func newTestRequest() *http.Request {
+	r, err := http.NewRequest("GET", "Something", nil)
+	if err != nil {
+		panic("bad request: " + err.Error())
+	}
 	return r
 }
 
-type testHandler struct {
-	respond *respond.Responder
-}
+type testHandler struct{}
 
 func (t *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t.respond.To(w, r).With(http.StatusOK, testdata)
+	respond.With(w, r, http.StatusOK, testdata)
+}
+
+func TestRespondWithHandlerFunc(t *testing.T) {
+	is := is.New(t)
+
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		respond.With(w, r, http.StatusOK, testdata)
+	}
+
+	responder := respond.New()
+	w := httptest.NewRecorder()
+	r := newTestRequest()
+
+	responder.HandlerFunc(fn)(w, r)
+
+	// assert it was written
+	is.Equal(http.StatusOK, w.Code)
+	var data map[string]interface{}
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
+	is.Equal(data, testdata)
+	is.Equal(w.HeaderMap.Get("Content-Type"), "application/json; charset=utf-8")
 }
 
 func TestToWithHandler(t *testing.T) {
 	is := is.New(t)
 
-	respond := respond.New()
+	responder := respond.New()
 	w := httptest.NewRecorder()
-	r := request()
+	r := newTestRequest()
 
-	handler := &testHandler{respond}
-	respond.Handler(handler).ServeHTTP(w, r)
+	handler := &testHandler{}
+	responder.Handler(handler).ServeHTTP(w, r)
 
 	is.Equal(http.StatusOK, w.Code)
 	var data map[string]interface{}
@@ -41,55 +63,33 @@ func TestToWithHandler(t *testing.T) {
 	is.Equal(data, testdata)
 }
 
-// TestTo tests the simple respond.To(w, r).With(status, data) case.
-func TestToWithHandlerFunc(t *testing.T) {
+func TestTransform(t *testing.T) {
 	is := is.New(t)
 
-	respond := respond.New()
+	newData := map[string]interface{}{"changed": true}
+
+	responder := respond.New()
+	responder.Transform = func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
+		return http.StatusCreated, newData
+	}
 	w := httptest.NewRecorder()
-	r := request()
+	r := newTestRequest()
 
-	respond.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		respond.To(w, r).With(http.StatusOK, testdata)
-	})(w, r)
+	handler := &testHandler{}
+	responder.Handler(handler).ServeHTTP(w, r)
 
-	is.Equal(http.StatusOK, w.Code)
+	is.Equal(http.StatusCreated, w.Code)
 	var data map[string]interface{}
 	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
-	is.Equal(data, testdata)
+	is.Equal(data, newData)
 }
 
-// TestUnwrappedPanics ensures that a helpful panic will occur if
-// respond.To is called without the handler being wrapped properly
-// with respond.Handler or respond.HandlerFunc.
-func TestUnwrappedPanics(t *testing.T) {
+func TestJSON(t *testing.T) {
 	is := is.New(t)
-	respond := respond.New()
+
 	w := httptest.NewRecorder()
-	r := request()
-	is.PanicWith("respond: must wrap with Handler or HandlerFunc", func() {
-		respond.To(w, r).With(http.StatusOK, testdata)
-	})
-}
+	r := newTestRequest()
 
-// TestNow ensures that called Now() will have the completion code
-// run immediately - rather than waiting until the function has exited.
-// Will also clean up immediately too.
-func TestNow(t *testing.T) {
-	is := is.New(t)
-
-	respond := respond.New()
-	testW := httptest.NewRecorder()
-	r := request()
-
-	respond.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		respond.To(w, r).With(http.StatusOK, testdata).Now()
-
-		is.Equal(http.StatusOK, testW.Code)
-		var data map[string]interface{}
-		is.NoErr(json.Unmarshal(testW.Body.Bytes(), &data))
-		is.Equal(data, testdata)
-
-	})(testW, r)
+	is.Equal(respond.JSON.ContentType(w, r), "application/json; charset=utf-8")
 
 }
