@@ -2,8 +2,6 @@
 
 Package respond provides low-touch idiomatic API responses for Go.
 
-## Features
-
   * Idiomatic way of responding to data APIs using `respond.With`
   * Use `respond.With` to respond with default options, or make a `respond.Options` for [advanced features](https://godoc.org/github.com/matryer/respond#Options).
   * Encoder abstraction lets you easily speak different formats
