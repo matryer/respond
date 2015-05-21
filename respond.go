@@ -89,10 +89,11 @@ type Options struct {
 	// multiple calls to With will panic.
 	AllowMultiple bool
 
-	// OnErr is a function field that gets called when an error occurs while
-	// responding.
-	// By default, the error will be logged out but you may use Options.OnErrPanic as
-	// the value to panic instead, or provide your own.
+	// OnErr is a function field that gets called when an
+	// error occurs while responding.
+	// By default, the error will be logged out but you may
+	// use Options.OnErrPanic as the value to panic instead,
+	// or provide your own.
 	OnErr func(err error)
 
 	// Encoder is a function field that gets the encoder to
@@ -100,8 +101,8 @@ type Options struct {
 	// If nil, JSON will be used.
 	Encoder func(w http.ResponseWriter, r *http.Request) Encoder
 
-	// Before is called for before each response is written and gives user code the chance
-	// to mutate the status or data.
+	// Before is called for before each response is written
+	// and gives user code the chance to mutate the status or data.
 	// Useful for handling different types of data differently (like errors),
 	// enveloping the response, setting common HTTP headers etc.
 	Before func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{})
