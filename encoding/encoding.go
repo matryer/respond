@@ -23,7 +23,7 @@ func New() *Encoders {
 	}
 }
 
-// EncoderFunc is the Responder.Encoder function field that will get the
+// EncoderFunc is the Options.Encoder function field that will get the
 // appropriate encoder for responding.
 func (m *Encoders) EncoderFunc(_ http.ResponseWriter, r *http.Request) respond.Encoder {
 	encoder, ok := m.Match(r.Header.Get("Accept"))
