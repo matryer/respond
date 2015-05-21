@@ -91,8 +91,8 @@ type Options struct {
 
 	// OnErr is a function field that gets called when an
 	// error occurs while responding.
-	// By default, the error will be logged out but you may
-	// use Options.OnErrPanic as the value to panic instead,
+	// By default, the error panic but you may
+	// use Options.OnErrLog to just log the error out instead,
 	// or provide your own.
 	OnErr func(err error)
 
