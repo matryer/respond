@@ -1,5 +1,9 @@
 # respond [![GoDoc](https://godoc.org/github.com/matryer/respond?status.svg)](https://godoc.org/github.com/matryer/respond)
 
+```
+respond.With(w, r, http.StatusOK, data)
+```
+
 Package respond provides low-touch API responses for Go data services.
 
   * Idiomatic way of responding to data APIs using `respond.With`
