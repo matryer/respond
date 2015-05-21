@@ -14,6 +14,10 @@ Package respond provides low-touch API responses for Go data services.
 
 ## Usage
 
+```
+go get gopkg.in/matryer/respond.v1
+```
+
 The simplest use of `respond` is to just call `respond.With` inside your handlers:
 
 ```
