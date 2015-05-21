@@ -12,18 +12,21 @@ Package respond provides low-touch idiomatic API responses for Go.
 
 ## Usage
 
-The simplest use of `respond` is to just call `respond.With`:
+The simplest use of `respond` is to just call `respond.With` inside your handlers:
 
 ```
 func handleSomething(w http.ResponseWriter, r *http.Request) {
 	
 	data, err := loadFromDB()
 	if err != nil {
+
+		// respond with an error
 		respond.With(w, r, http.StatusInternalServerError, err)
-		return
+		return // always return after responding
+
 	}
 
-	// OK
+	// respond with OK, and the data
 	respond.With(w, r, http.StatusOK, data)
 
 }
