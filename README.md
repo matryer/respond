@@ -46,4 +46,6 @@ func main() {
 }
 ```
 
+Use `respond.With` as normal.
+
 For a complete list of options, see the [API documentation for respond.Options](https://godoc.org/github.com/matryer/respond#Options).
