@@ -30,7 +30,7 @@ func with(w http.ResponseWriter, r *http.Request, status int, data interface{}, 
 		if hasOpts && opts.OnErr != nil {
 			opts.OnErr(err)
 		} else {
-			log.Println("respond:", err.Error())
+			panic("respond: " + err.Error())
 		}
 	}
 
@@ -139,8 +139,8 @@ func (o *Options) Handler(handler http.Handler) http.Handler {
 	})
 }
 
-// OnErrPanic panics with the specified error.
+// OnErrLog prints a log out with the specified error.
 // It is an option for Options.OnErr.
-func (o *Options) OnErrPanic(err error) {
-	panic("respond: " + err.Error())
+func (o *Options) OnErrLog(err error) {
+	log.Println("respond: " + err.Error())
 }

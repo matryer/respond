@@ -101,7 +101,7 @@ func TestWithError(t *testing.T) {
 
 	err := errors.New("something went wrong")
 
-	options := &respond.Options{
+	opts := &respond.Options{
 		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
 			if err, ok := data.(error); ok {
 				return status, map[string]interface{}{"error": err.Error()}
@@ -113,7 +113,7 @@ func TestWithError(t *testing.T) {
 		status: http.StatusInternalServerError,
 		data:   err,
 	}
-	handler := options.Handler(testHandler)
+	handler := opts.Handler(testHandler)
 
 	handler.ServeHTTP(w, r)
 
@@ -268,16 +268,6 @@ func TestEncoderOnErr(t *testing.T) {
 
 	is.OK(onErrCall)
 	is.Equal(onErrCall["err"], encoderErr)
-
-}
-
-func TestOnErrPanic(t *testing.T) {
-	is := is.New(t)
-
-	o := respond.Options{}
-
-	err := errors.New("something went wrong")
-	is.PanicWith("respond: "+err.Error(), func() { o.OnErrPanic(err) })
 
 }
 
