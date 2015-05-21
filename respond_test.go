@@ -8,9 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/matryer/respond"
-
 	"github.com/cheekybits/is"
+	"github.com/matryer/respond"
 )
 
 var testdata = map[string]interface{}{"test": true}
