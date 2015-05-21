@@ -94,6 +94,37 @@ func TestWithStatusOptions(t *testing.T) {
 	is.Equal(w.HeaderMap.Get("Content-Type"), "application/json; charset=utf-8")
 }
 
+func TestWithError(t *testing.T) {
+	is := is.New(t)
+
+	w := httptest.NewRecorder()
+	r := newTestRequest()
+
+	err := errors.New("something went wrong")
+
+	options := &respond.Options{
+		Before: func(w http.ResponseWriter, r *http.Request, status int, data interface{}) (int, interface{}) {
+			if err, ok := data.(error); ok {
+				return status, map[string]interface{}{"error": err.Error()}
+			}
+			return status, data
+		},
+	}
+	testHandler := &testHandler{
+		status: http.StatusInternalServerError,
+		data:   err,
+	}
+	handler := options.Handler(testHandler)
+
+	handler.ServeHTTP(w, r)
+
+	is.Equal(http.StatusInternalServerError, w.Code)
+	var data map[string]interface{}
+	is.NoErr(json.Unmarshal(w.Body.Bytes(), &data))
+	is.Equal(data, map[string]interface{}{"error": err.Error()})
+	is.Equal(w.HeaderMap.Get("Content-Type"), "application/json; charset=utf-8")
+}
+
 func TestBefore(t *testing.T) {
 	is := is.New(t)
 
