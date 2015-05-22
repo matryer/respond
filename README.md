@@ -1,6 +1,7 @@
 # respond [![GoDoc](https://godoc.org/github.com/matryer/respond?status.svg)](https://godoc.org/github.com/matryer/respond)
 
   * [v1](https://github.com/matryer/respond/releases/tag/v1) has been released
+  * Read the [blog post 'API responses in Go'](https://medium.com/@matryer/api-responses-in-go-1ef8f7b74997) for an in-depth overview
 
 Get it:
 
