@@ -1,5 +1,23 @@
 # respond [![GoDoc](https://godoc.org/github.com/matryer/respond?status.svg)](https://godoc.org/github.com/matryer/respond)
 
+  * [v1](https://github.com/matryer/respond/releases/tag/v1) has been released
+
+Get it:
+
+```
+go get gopkg.in/matryer/respond.v1
+```
+
+Import it:
+
+```
+import (
+  "gopkg.in/matryer/respond.v1"
+)
+```
+
+Use it:
+
 ```
 respond.With(w, r, http.StatusOK, data)
 ```
@@ -13,10 +31,6 @@ Package respond provides low-touch API responses for Go data services.
   * Protected against multiple responses
 
 ## Usage
-
-```
-go get gopkg.in/matryer/respond.v1
-```
 
 The simplest use of `respond` is to just call `respond.With` inside your handlers:
 
