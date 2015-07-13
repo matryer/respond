@@ -13,7 +13,7 @@ func with(w http.ResponseWriter, r *http.Request, status int, data interface{}, 
 		panic("respond: multiple responses")
 	}
 
-	var encoder Encoder = JSON // JSON by default
+	encoder := JSON // JSON by default
 	if hasOpts {
 		if opts.Before != nil {
 			status, data = opts.Before(w, r, status, data)

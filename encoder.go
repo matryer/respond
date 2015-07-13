@@ -24,7 +24,7 @@ type jsonEncoder struct{}
 var _ Encoder = (*jsonEncoder)(nil)
 
 // JSON is an Encoder for JSON.
-var JSON *jsonEncoder
+var JSON Encoder = (*jsonEncoder)(nil)
 
 func (*jsonEncoder) Encode(w http.ResponseWriter, r *http.Request, v interface{}) error {
 	return json.NewEncoder(w).Encode(v)
