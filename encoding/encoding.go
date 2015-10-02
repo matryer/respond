@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/matryer/respond"
+	"github.com/zbindenren/respond"
 )
 
 // Encoders represents a collection of respond.Encoder objects.

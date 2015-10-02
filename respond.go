@@ -3,7 +3,13 @@ package respond
 import (
 	"log"
 	"net/http"
-	"sync"
+
+	"github.com/nbio/httpcontext"
+)
+
+var (
+	OptionsKey   = "options"
+	RespondedKey = "responded"
 )
 
 func with(w http.ResponseWriter, r *http.Request, status int, data interface{}, opts *Options, multiple bool) {
@@ -38,19 +44,19 @@ func with(w http.ResponseWriter, r *http.Request, status int, data interface{}, 
 		if opts.After != nil {
 			opts.After(w, r, status, data)
 		}
-		mutex.Lock()
-		responded[r] = true
-		mutex.Unlock()
+		httpcontext.Set(r, RespondedKey, true)
 	}
 
 }
 
 // With responds to the client.
 func With(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
-	mutex.RLock()
-	opts := options[r]
-	multiple := responded[r]
-	mutex.RUnlock()
+	var opts *Options
+	optsInterface, hasOpts := httpcontext.GetOk(r, OptionsKey)
+	if hasOpts {
+		opts = optsInterface.(*Options)
+	}
+	_, multiple := httpcontext.GetOk(r, RespondedKey)
 	with(w, r, status, data, opts, multiple)
 }
 
@@ -59,10 +65,12 @@ func With(w http.ResponseWriter, r *http.Request, status int, data interface{}) 
 // payload will be returned:
 //     {"status":"I'm a teapot","code":418}
 func WithStatus(w http.ResponseWriter, r *http.Request, status int) {
-	mutex.RLock()
-	opts, hasOpts := options[r]
-	multiple := responded[r]
-	mutex.RUnlock()
+	var opts *Options
+	optsInterface, hasOpts := httpcontext.GetOk(r, OptionsKey)
+	if hasOpts {
+		opts = optsInterface.(*Options)
+	}
+	_, multiple := httpcontext.GetOk(r, RespondedKey)
 	var data interface{}
 	if hasOpts && opts.StatusData != nil {
 		data = opts.StatusData(w, r, status)
@@ -75,13 +83,6 @@ func WithStatus(w http.ResponseWriter, r *http.Request, status int) {
 	}
 	with(w, r, status, data, opts, multiple)
 }
-
-var (
-	mutex     sync.RWMutex
-	options   map[*http.Request]*Options
-	responded map[*http.Request]bool
-	initOnce  sync.Once
-)
 
 // Options provides additional control over the behaviour of With.
 type Options struct {
@@ -122,21 +123,13 @@ type Options struct {
 // containing With calls.
 func (o *Options) Handler(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		initOnce.Do(func() {
-			options = make(map[*http.Request]*Options)
-			responded = make(map[*http.Request]bool)
-		})
-		mutex.Lock()
-		options[r] = o
-		mutex.Unlock()
-		defer func() {
-			mutex.Lock()
-			delete(options, r)
-			delete(responded, r)
-			mutex.Unlock()
-		}()
+		httpcontext.Set(r, OptionsKey, o)
 		handler.ServeHTTP(w, r)
 	})
+}
+
+func (o *Options) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	httpcontext.Set(r, OptionsKey, o)
 }
 
 // OnErrLog prints a log out with the specified error.
