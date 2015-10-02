@@ -128,6 +128,10 @@ func (o *Options) Handler(handler http.Handler) http.Handler {
 	})
 }
 
+func (o *Options) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	httpcontext.Set(r, OptionsKey, o)
+}
+
 // OnErrLog prints a log out with the specified error.
 // It is an option for Options.OnErr.
 func (o *Options) OnErrLog(err error) {

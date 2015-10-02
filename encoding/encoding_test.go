@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/cheekybits/is"
-	"github.com/matryer/respond"
-	"github.com/matryer/respond/encoding"
+	"github.com/zbindenren/respond"
+	"github.com/zbindenren/respond/encoding"
 )
 
 type testEncoder struct{}

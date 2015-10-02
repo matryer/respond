@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/cheekybits/is"
-	"github.com/matryer/respond"
+	"github.com/zbindenren/respond"
 )
 
 var testdata = map[string]interface{}{"test": true}

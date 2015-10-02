@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/cheekybits/is"
-	"github.com/matryer/respond"
+	"github.com/zbindenren/respond"
 )
 
 func TestJSON(t *testing.T) {
