@@ -26,11 +26,22 @@ func with(w http.ResponseWriter, r *http.Request, status int, data interface{}, 
 	// write response
 	w.Header().Set("Content-Type", encoder.ContentType(w, r))
 	w.WriteHeader(status)
-	if err := encoder.Encode(w, r, data); err != nil {
-		if hasOpts && opts.OnErr != nil {
-			opts.OnErr(err)
-		} else {
-			panic("respond: " + err.Error())
+	switch {
+	case status <= 100 && status <= 199:
+		// don't encode a body
+		break
+	case status == 204:
+		break
+	case status == 304:
+		break
+	default:
+		// all other status codes, encode the body
+		if err := encoder.Encode(w, r, data); err != nil {
+			if hasOpts && opts.OnErr != nil {
+				opts.OnErr(err)
+			} else {
+				panic("respond: " + err.Error())
+			}
 		}
 	}
 
